@@ -359,6 +359,11 @@ static unsigned int freq_to_targetload(
 	unsigned int ret;
 	unsigned long flags;
 
+	/* Defensive: never dereference a NULL target-load table. */
+	if (unlikely(!tunables->target_loads ||
+		     tunables->ntarget_loads <= 0))
+		return TARGET_LOAD;
+
 	spin_lock_irqsave(&tunables->target_loads_lock, flags);
 
 	for (i = 0; i < tunables->ntarget_loads - 1 &&
@@ -460,6 +465,11 @@ static unsigned int freq_to_above_hispeed_delay(struct sugov_tunables *tunables,
 	unsigned long flags;
 	unsigned int ret;
 	int i;
+
+	/* Defensive: never dereference a NULL delay table. */
+	if (unlikely(!tunables->above_hispeed_delay ||
+		     tunables->nabove_hispeed_delay <= 0))
+		return 0;
 
 	spin_lock_irqsave(&tunables->above_hispeed_delay_lock, flags);
 
@@ -1724,8 +1734,11 @@ static void sugov_tunables_restore(struct cpufreq_policy *policy)
 	tunables->up_rate_limit_us = cached->up_rate_limit_us;
 	tunables->down_rate_limit_us = cached->down_rate_limit_us;
 #ifdef OPLUS_FEATURE_POWER_CPUFREQ
-	tunables->above_hispeed_delay = cached->above_hispeed_delay;
-	tunables->nabove_hispeed_delay = cached->nabove_hispeed_delay;
+	/* cached may hold a stale/NULL pointer; keep the init default then. */
+	if (cached->above_hispeed_delay) {
+		tunables->above_hispeed_delay = cached->above_hispeed_delay;
+		tunables->nabove_hispeed_delay = cached->nabove_hispeed_delay;
+	}
 #endif
 }
 
@@ -1846,12 +1859,21 @@ static void sugov_exit(struct cpufreq_policy *policy)
 
 	mutex_lock(&global_tunables_lock);
 
+	/*
+	 * gov_attr_set_put() drops the last reference to the tunables and
+	 * therefore frees them (kobject_put() -> sugov_tunables_free() ->
+	 * kfree()).  Save them *before* that: otherwise sugov_tunables_save()
+	 * reads freed memory and caches a garbage/NULL above_hispeed_delay,
+	 * which sugov_tunables_restore() later installs into a live tunables.
+	 * freq_to_above_hispeed_delay() then dereferences that NULL pointer
+	 * from WALT irq_work context and panics the kernel.
+	 */
+	sugov_tunables_save(policy, tunables);
+
 	count = gov_attr_set_put(&tunables->attr_set, &sg_policy->tunables_hook);
 	policy->governor_data = NULL;
-	if (!count) {
-		sugov_tunables_save(policy, tunables);
+	if (!count)
 		sugov_clear_global_tunables();
-	}
 
 	mutex_unlock(&global_tunables_lock);
 
