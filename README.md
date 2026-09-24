@@ -42,36 +42,41 @@ the problems which may result by upgrading your kernel.
 
 ___________________________________________________________________________________________________
 
-# 鸣谢 / Acknowledgements
+# Acknowledgements
 
-本仓库是上游项目的 fork。内核源码、移植适配与整套自动化构建体系均来自原作者，
-在此向上游作者与所有相关开源项目致谢。
+This repository is a fork. All kernel source code, device porting work and the entire automated
+build system originate from the upstream author. Thanks are due to the upstream project and to
+every open-source project this build depends on.
 
-## 上游项目
+## Upstream projects
 
-- **[xxtvrxx233/android_kernel_oplus_sm8250](https://github.com/xxtvrxx233/android_kernel_oplus_sm8250)**
-  —— 本 fork 的直接上游，本仓库的全部内核源码与移植工作均出自此处。
-- **[xxtvrxx233/AnyKernel3](https://github.com/xxtvrxx233/AnyKernel3)**
-  —— 配套的刷机包方案（本仓库使用其 `realme-sm8250` 分支）。
+- **[xxtvrxx233/android_kernel_oplus_sm8250](https://github.com/xxtvrxx233/android_kernel_oplus_sm8250)**:
+  the direct upstream of this fork. All kernel source and porting work in this repository
+  originates there.
+- **[xxtvrxx233/AnyKernel3](https://github.com/xxtvrxx233/AnyKernel3)**:
+  the accompanying flashable-package setup (this repository uses its `realme-sm8250` branch).
 
-特别感谢上游作者提供的以下基础设施，本 fork 直接沿用、未作改动：
+The following infrastructure is used here unchanged, and is gratefully credited to the upstream
+author:
 
-- 基于 GitHub Actions 的全自动内核构建与打包流水线（`ci/build_ci.sh`、`.github/workflows/`）
-- `zyc-clang-16` 工具链的选型与获取脚本
-- 面向 realme SM8250 系列机型的 AnyKernel3 刷机包配置
+- The fully automated kernel build and packaging pipeline built on GitHub Actions
+  (`ci/build_ci.sh`, `.github/workflows/`).
+- The selection and fetch script for the `zyc-clang-16` toolchain.
+- The AnyKernel3 flashable-package configuration for realme SM8250 devices.
 
-## 其他上游依赖
+## Other upstream dependencies
 
-- **[ZyCromerZ/Clang](https://github.com/ZyCromerZ/Clang)**
-  —— 本项目构建所使用的 Clang 16 预编译工具链（`Clang-16.0.6-20250721`）。
-- **[osm0sis/AnyKernel3](https://github.com/osm0sis/AnyKernel3)**
-  —— AnyKernel3 框架的原始作者。
-- **[ReSukiSU](https://github.com/ReSukiSU/ReSukiSU)**
-  —— `build_ksu.sh` 所集成的内核级 root 方案。
-- **Linux 内核社区 / [CIP 项目](https://git.kernel.org/pub/scm/linux/kernel/git/cip/linux-cip.git) / CAF（Code Aurora Forum）**
-  —— 内核源码基线。
+- **[ZyCromerZ/Clang](https://github.com/ZyCromerZ/Clang)**:
+  the prebuilt Clang 16 toolchain used to build this kernel (`Clang-16.0.6-20250721`).
+- **[osm0sis/AnyKernel3](https://github.com/osm0sis/AnyKernel3)**:
+  original author of the AnyKernel3 framework.
+- **[ReSukiSU](https://github.com/ReSukiSU/ReSukiSU)**:
+  the kernel-level root solution integrated by `build_ksu.sh`.
+- **The Linux kernel community / [the CIP project](https://git.kernel.org/pub/scm/linux/kernel/git/cip/linux-cip.git) / CAF (Code Aurora Forum)**:
+  the kernel source baseline.
 
-## 说明
+## Note
 
-本 fork 仅用于个人使用与问题排查。所有原始代码的版权、署名与许可，
-均归上述各项目的作者所有；本仓库不对其主张任何权利。
+This fork is maintained for personal use and troubleshooting only. All copyright, attribution and
+licensing of the original code remain with the authors of the projects listed above; no claim is
+made here.
