@@ -1421,6 +1421,17 @@ void sched_assist_target_comm(struct task_struct *task)
 		return;
 	}
 
+	/* Autonomous UX boosting for SystemUI (QS Shade, StatusBar, Gestures) across all ROMs */
+	if (strstr(grp_leader->comm, "systemui")) {
+		if (strstr(task->comm, "systemui")) {
+			task->ux_state |= (SA_TYPE_ANIMATOR | SA_TYPE_LIGHT);
+			return;
+		} else if (!strcmp(task->comm, "RenderThread")) {
+			task->ux_state |= (SA_TYPE_ANIMATOR | SA_TYPE_HEAVY);
+			return;
+		}
+	}
+
 	if ((strstr(grp_leader->comm, CAMERA_MAINTHREAD_NAME) || strstr(grp_leader->comm, OPLUS_CAMERA_MAINTHREAD_NAME)) && (strstr(task->comm, CAMERA_PREMR_NAME)
 		|| strstr(task->comm, CAMERA_PREPT_NAME)
 		|| strstr(task->comm, CAMERA_HALCONT_NAME)
