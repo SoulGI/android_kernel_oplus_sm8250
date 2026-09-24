@@ -1,0 +1,228 @@
+name: Build & Release (both variants)
+
+# Builds both kernel variants and publishes them as a single GitHub Release.
+#
+#   <name>.zip       - no built-in root (use Magisk / externally installed KernelSU)
+#   <name>-ksu.zip   - with ReSukiSU built in
+#
+# Release / tag name: mysterious-c17-seleffixes-<YYYYMMDD>-<short sha>
+# Run the workflow manually with "release_name" filled in to override it.
+#
+# NOTE: this file is intentionally separate from build.yml / build_ksu.yml so
+# that those upstream files stay untouched.
+
+on:
+  push:
+    paths:
+      - '.github/workflows/release.yml'
+  workflow_dispatch:
+    inputs:
+      release_name:
+        description: 'Release name / tag (empty = mysterious-c17-seleffixes-<date>-<sha>)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  # ------------------------------------------------------------------ #
+  build:
+    name: Build (no built-in root)
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Install deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            bc bison flex libssl-dev \
+            libelf-dev libdw-dev libbpf-dev zlib1g-dev \
+            cpio python3 rsync wget git zip unzip \
+            llvm lld cmake build-essential
+
+      - name: Build pahole (>= 1.25 for --btf_features)
+        run: |
+          git clone -q --depth=1 --branch v1.31 https://github.com/acmel/dwarves.git /tmp/dwarves
+          cd /tmp/dwarves
+          mkdir -p build && cd build
+          cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr ..
+          make -s -j$(nproc --all)
+          sudo make install
+          pahole --version
+
+      - name: Cache Clang toolchain
+        uses: actions/cache@v4
+        with:
+          path: zyc-clang-16
+          key: clang-16.0.6-20250721-release
+
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          max-size: "2G"
+          key: kernel-ccache-nonksu-${{ runner.os }}
+
+      - name: Build kernel
+        run: |
+          chmod +x ./ci/build_ci.sh
+          ./ci/build_ci.sh
+
+      - name: Package AnyKernel3 zip
+        run: |
+          cd anykernel
+          rm -f ./*.zip
+          zip -r ../anykernel-nonksu.zip . -x '*.zip'
+          cd ..
+          ls -lh anykernel-nonksu.zip
+          unzip -l anykernel-nonksu.zip | head -25
+
+      - name: Upload zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: zip-nonksu
+          path: anykernel-nonksu.zip
+          if-no-files-found: error
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log-nonksu
+          path: build.log
+          if-no-files-found: ignore
+
+  # ------------------------------------------------------------------ #
+  build-ksu:
+    name: Build (ReSukiSU)
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Install deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            bc bison flex libssl-dev \
+            libelf-dev libdw-dev libbpf-dev zlib1g-dev \
+            cpio python3 rsync wget git zip unzip \
+            llvm lld cmake build-essential
+
+      - name: Build pahole (>= 1.25 for --btf_features)
+        run: |
+          git clone -q --depth=1 --branch v1.31 https://github.com/acmel/dwarves.git /tmp/dwarves
+          cd /tmp/dwarves
+          mkdir -p build && cd build
+          cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr ..
+          make -s -j$(nproc --all)
+          sudo make install
+          pahole --version
+
+      - name: Cache Clang toolchain
+        uses: actions/cache@v4
+        with:
+          path: zyc-clang-16
+          key: clang-16.0.6-20250721-release
+
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          max-size: "2G"
+          key: kernel-ccache-ksu-${{ runner.os }}
+
+      - name: Build kernel
+        run: |
+          chmod +x ./ci/build_ksu_ci.sh
+          ./ci/build_ksu_ci.sh
+
+      - name: Package AnyKernel3 zip
+        run: |
+          cd anykernel
+          rm -f ./*.zip
+          zip -r ../anykernel-ksu.zip . -x '*.zip'
+          cd ..
+          ls -lh anykernel-ksu.zip
+          unzip -l anykernel-ksu.zip | head -25
+
+      - name: Upload zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: zip-ksu
+          path: anykernel-ksu.zip
+          if-no-files-found: error
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log-ksu
+          path: build.log
+          if-no-files-found: ignore
+
+  # ------------------------------------------------------------------ #
+  release:
+    name: Publish release
+    needs: [build, build-ksu]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Download non-ksu zip
+        uses: actions/download-artifact@v4
+        with:
+          name: zip-nonksu
+          path: artifacts
+
+      - name: Download ksu zip
+        uses: actions/download-artifact@v4
+        with:
+          name: zip-ksu
+          path: artifacts
+
+      - name: Compose release name
+        id: rel
+        run: |
+          SHORT="${GITHUB_SHA::8}"
+          DATE="$(date -u +%Y%m%d)"
+          NAME="${{ github.event.inputs.release_name }}"
+          if [ -z "$NAME" ]; then
+            NAME="mysterious-c17-seleffixes-${DATE}-${SHORT}"
+          fi
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "Release name / tag: $NAME"
+
+      - name: Rename assets
+        run: |
+          set -e
+          cd artifacts
+          mv anykernel-nonksu.zip "${{ steps.rel.outputs.name }}.zip"
+          mv anykernel-ksu.zip     "${{ steps.rel.outputs.name }}-ksu.zip"
+          ls -lh
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.rel.outputs.name }}
+          name: ${{ steps.rel.outputs.name }}
+          files: artifacts/*.zip
+          fail_on_unmatched_files: true
+          generate_release_notes: true
+          body: |
+            Built from `${{ github.sha }}` on branch `mysterious-c17`.
+
+            | asset | description |
+            | --- | --- |
+            | `<name>.zip` | no built-in root, use Magisk or an externally installed KernelSU |
+            | `<name>-ksu.zip` | with ReSukiSU built in |
+
+            Flash with any AnyKernel3-capable tool (a custom recovery, or a kernel
+            manager such as EX Kernel Manager / Franco Kernel Manager).
+
+            **Disclaimer:** this fork applies fixes produced with LLM assistance and
+            validates them only by real-world use, as described at the top of
+            `README.md`. If that is not acceptable to you, use the upstream
+            repository instead:
+            https://github.com/xxtvrxx233/android_kernel_oplus_sm8250
