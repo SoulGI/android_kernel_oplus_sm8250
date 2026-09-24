@@ -1,3 +1,14 @@
+# Difference
+
+This repository applies fixes provided by LLMs directly. The owner knows nothing about the Linux
+kernel and is unable to tell whether such a fix is correct or wrong; the only verification used is
+actual use. If it passes real-world testing, it is treated as a correct fix.
+
+If you cannot accept this unusual way of fixing things, please use the output of the upstream
+repository only: https://github.com/xxtvrxx233/android_kernel_oplus_sm8250
+
+___________________________________________________________________________________________________
+
 # Build it yourself?
 
 Build Kernel
