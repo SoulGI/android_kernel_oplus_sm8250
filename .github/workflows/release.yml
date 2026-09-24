@@ -5,7 +5,7 @@ name: Build & Release (both variants)
 #   <name>.zip       - no built-in root (use Magisk / externally installed KernelSU)
 #   <name>-ksu.zip   - with ReSukiSU built in
 #
-# Release / tag name: mysterious-c17-seleffixes-<YYYYMMDD>-<short sha>
+# Release / tag name: mysterious-c17-selffixes-<YYYYMMDD>-<short sha>
 # Run the workflow manually with "release_name" filled in to override it.
 #
 # NOTE: this file is intentionally separate from build.yml / build_ksu.yml so
@@ -18,7 +18,7 @@ on:
   workflow_dispatch:
     inputs:
       release_name:
-        description: 'Release name / tag (empty = mysterious-c17-seleffixes-<date>-<sha>)'
+        description: 'Release name / tag (empty = mysterious-c17-selffixes-<date>-<sha>)'
         required: false
         type: string
 
@@ -189,7 +189,7 @@ jobs:
           DATE="$(date -u +%Y%m%d)"
           NAME="${{ github.event.inputs.release_name }}"
           if [ -z "$NAME" ]; then
-            NAME="mysterious-c17-seleffixes-${DATE}-${SHORT}"
+            NAME="mysterious-c17-selffixes-${DATE}-${SHORT}"
           fi
           echo "name=$NAME" >> "$GITHUB_OUTPUT"
           echo "Release name / tag: $NAME"
