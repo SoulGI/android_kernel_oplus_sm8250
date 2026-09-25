@@ -1,11 +1,17 @@
-# Difference
+# Difference between this repository and upstream repository
 
-This repository applies fixes provided by LLMs directly. The owner knows nothing about the Linux
-kernel and is unable to tell whether such a fix is correct or wrong; the only verification used is
-actual use. If it passes real-world testing, it is treated as a correct fix.
+This repository directly applies several fixes generated after analysis by a Large Language Model (LLM). **I have zero experience with Linux kernel development or custom modding**, so I cannot verify whether these fixes are legitimately correct or merely LLM hallucinations.
 
-If you cannot accept this unusual way of fixing things, please use the output of the upstream
-repository only: https://github.com/xxtvrxx233/android_kernel_oplus_sm8250
+Therefore, I forked the upstream repository, applied a few LLM-generated fixes, built the flashable package with the help of the LLM, and finally flashed it onto my own device.
+
+Based on my hands-on testing so far, the fixes provided by the LLM seem visually and functionally correct in daily use. However, I cannot guarantee that issues won't gradually surface tomorrow, the day after, or further down the line.
+
+**Use at your own risk. I hold myself to the exact same standard. So if you do not understand what "use at your own risk" means, please do not use builds from this repository.**
+
+If something goes wrong when you flash it, whether you hurl abuse at me, beg humbly for help, or offer me money directly, I will not be able to assist you. As mentioned earlier, I am just an amateur doing my best to look out for myself.
+
+In most cases, please consider using upstream only:
+https://github.com/xxtvrxx233/android_kernel_oplus_sm8250
 
 ___________________________________________________________________________________________________
 
