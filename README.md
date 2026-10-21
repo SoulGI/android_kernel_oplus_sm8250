@@ -21,7 +21,7 @@ Build Kernel
 ```bash
   sh ./build.sh
 ```
-Build Kernel with ReSukiSU
+Build Kernel with BakaSU
 ```bash
   sh ./build_ksu.sh
 ```

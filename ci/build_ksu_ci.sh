@@ -14,7 +14,7 @@ export SUBARCH=arm64
 
 # AnyKernel
 AK3_PATH=$KERNEL_ROOT/anykernel
-CUSTOM_AK3_NAME=BT-ReSukiSU-BPF-5.10
+CUSTOM_AK3_NAME=BT-BakaSU-BPF-5.10
 FULL_AK3_NAME=$CUSTOM_AK3_NAME-$(date +%Y-%m-%d)
 
 if [ ! -d "$AK3_PATH" ]; then
@@ -26,8 +26,8 @@ if find $AK3_PATH -maxdepth 1 -type f -name "*.zip" | grep -q .; then
     find $AK3_PATH -maxdepth 1 -type f -name "*.zip" -delete
 fi
 
-# ReSukiSU
-curl -LSs "https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/main/kernel/setup.sh" | bash
+# BakaSU
+curl -LSs "https://raw.githubusercontent.com/Baka-SU/BakaSU/main/kernel/setup.sh" | bash
 
 # Modify repo name
 BASE_VER=$(grep -oE 'expr [0-9]+' "$KERNEL_ROOT/KernelSU/kernel/Kbuild" | awk '{print $2}' || echo "30000")
@@ -46,14 +46,22 @@ echo ">>> Version Name: $FINAL_KSU_VER"
 export KSU_MAKE_ARGS="REPO_NAME=xxtvrxx233-Github_actions KSU_VERSION_FULL=$FINAL_KSU_VER KSU_COMMIT_SHA=$KSU_HASH KSU_VERSION=$KSU_VERSION_CODE"
 
 # ---- drivers/Kconfig ----
-echo "Injecting KSU Kconfig entry..."
-echo "" >> "$KCONFIG_FILE"
-echo "$KSU_KCONFIG_LINE" >> "$KCONFIG_FILE"
+if ! grep -qF "$KSU_KCONFIG_LINE" "$KCONFIG_FILE"; then
+    echo "Injecting KSU Kconfig entry..."
+    echo "" >> "$KCONFIG_FILE"
+    echo "$KSU_KCONFIG_LINE" >> "$KCONFIG_FILE"
+else
+    echo "KSU Kconfig entry already present, skipping"
+fi
 
 # ---- drivers/Makefile ----
-echo "Injecting KSU Makefile entry..."
-echo "" >> "$MAKEFILE_FILE"
-echo "$KSU_MAKEFILE_LINE" >> "$MAKEFILE_FILE"
+if ! grep -qF "$KSU_MAKEFILE_LINE" "$MAKEFILE_FILE"; then
+    echo "Injecting KSU Makefile entry..."
+    echo "" >> "$MAKEFILE_FILE"
+    echo "$KSU_MAKEFILE_LINE" >> "$MAKEFILE_FILE"
+else
+    echo "KSU Makefile entry already present, skipping"
+fi
 
 # Clang Toolchain Logic
 if [ ! -d "$KERNEL_ROOT/zyc-clang-16/bin" ]; then
